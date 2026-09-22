@@ -1,0 +1,144 @@
+// Hospital & Patient Management System - DBML Schema
+
+Table User {
+  id integer [primary key]
+  first_name varchar
+  last_name varchar
+  email varchar [unique]
+  password_hash varchar
+  role varchar // ADMIN | DOCTOR | PATIENT
+  is_active boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table Department {
+  id integer [primary key]
+  name varchar [unique]
+  description text
+  is_active boolean
+  created_at timestamp
+}
+
+Table Doctor {
+  id integer [primary key]
+  user_id integer [unique]
+  specialization varchar
+  bio text
+  phone varchar
+  qualification varchar
+  department_id integer
+  is_active boolean
+  created_at timestamp
+}
+
+Table Patient {
+  id integer [primary key]
+  user_id integer [unique]
+  date_of_birth date
+  gender varchar
+  phone varchar
+  address text
+  is_active boolean
+  created_at timestamp
+}
+
+Table Admin {
+  id integer [primary key]
+  user_id integer [unique]
+  department varchar
+  phone varchar
+  is_active boolean
+  created_at timestamp
+}
+
+Table Doctor_Availability {
+  id integer [primary key]
+  doctor_id integer
+  day_of_week varchar // Mon-Sun
+  start_time time
+  end_time time
+  is_exception boolean // leave
+  notes text
+  created_at timestamp
+}
+
+Table Appointment {
+  id integer [primary key]
+  patient_id integer
+  doctor_id integer
+  department_id integer
+  appointment_date date
+  appointment_time time
+  status varchar // REQUESTED | CONFIRMED | COMPLETED | CANCELLED | NO_SHOW
+  reason text // for reject/cancel
+  notes text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table Appointment_Notification {
+  id integer [primary key]
+  appointment_id integer
+  type varchar // email | sms
+  status varchar // sent | failed | pending
+  message text
+  sent_at timestamp
+  created_at timestamp
+}
+
+Table Invoice {
+  id integer [primary key]
+  appointment_id integer [unique]
+  amount decimal
+  tax decimal
+  status varchar // PENDING | PAID | REFUNDED
+  payment_method varchar
+  paid_at timestamp
+  created_at timestamp
+}
+
+Table Audit_Log {
+  id integer [primary key]
+  user_id integer
+  entity_type varchar // appointment | schedule | etc.
+  entity_id integer
+  action varchar // CREATE | UPDATE | DELETE
+  old_value text
+  new_value text
+  created_at timestamp
+}
+
+Table Report {
+  id integer [primary key]
+  generated_by integer
+  report_type varchar // patients | appointments | doctor_load | trends
+  date_range_start date
+  date_range_end date
+  file_path varchar // CSV/Excel
+  created_at timestamp
+}
+
+// Relationships
+
+// Role-based profiles linked to User
+Ref: Doctor.user_id - User.id
+Ref: Patient.user_id - User.id
+Ref: Admin.user_id - User.id
+
+// Department & Doctor Availability
+Ref: Doctor.department_id > Department.id
+Ref: Doctor_Availability.doctor_id > Doctor.id
+
+// Appointments
+Ref: Appointment.patient_id > Patient.id
+Ref: Appointment.doctor_id > Doctor.id
+Ref: Appointment.department_id > Department.id
+
+// Notifications & Invoices
+Ref: Appointment_Notification.appointment_id > Appointment.id
+Ref: Invoice.appointment_id - Appointment.id
+
+// Audit & Reporting
+Ref: Audit_Log.user_id > User.id
+Ref: Report.generated_by > Admin.id
